@@ -7,8 +7,8 @@ import { Analytics } from "@vercel/analytics/react"
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'SupBot | AI Support Solution',
-  description: 'Instant AI support bots. Train and deploy support bots with ease.',
+  title: 'PDF to Table',
+  description: 'PDF Converter',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -16,9 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html data-theme="emerald" className="custom-scrollbar">
       <body className="bg-base-100">
       <Analytics/>
-        <SessionProvider>
           {children}
-        </SessionProvider>
       </body>
     </html>
 

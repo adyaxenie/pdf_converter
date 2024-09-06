@@ -2,17 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signIn, signOut, useSession } from 'next-auth/react'
 import axios from 'axios'
-import Link from 'next/link';
 import { UploadCloud, XIcon } from 'lucide-react';
-import Image from 'next/image';
-import StripeCheckoutButton from './components/stripeCheckoutButton';
-import PricingCheckoutButton from './components/pricingCheckoutButton';
-import NavBar from "./components/navBar";
-import React from "react";
 import { Document, Page } from 'react-pdf';
 import { pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -21,22 +16,18 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 import AOS from "aos";
 import "aos/dist/aos.css";
-import { set } from 'zod';
 
 export default function Home() {
-  const [tier, setTier] = useState(0);
-  const router = useRouter();
-  const [prompt, setPrompt] = useState('');
-  const [generatedText, setGeneratedText] = useState('');
-  const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState('');
+  const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [numPages, setNumPages] = useState<number | null>(null);
 
   const clearFile = () => {
     setFile(null);
     setText('');
-  }
+  };
 
   const handleFileChange = (event: any) => {
     const selectedFile = event.target.files?.[0] || null;
@@ -78,41 +69,37 @@ export default function Home() {
     }
   };
 
-  const fetchGeneratedText = async (prompt: any) => {
-    try {
-      const response = await axios.post('/api/chat', { prompt });
-      return response.data.text;
-    } catch (error) {
-      console.error('Error generating text:', error);
-      throw new Error('Failed to generate text');
-    }
-  };
-
-  const handleGenerateText = async () => {
-    setLoading(true);
-    try {
-      const text = await fetchGeneratedText(prompt);
-      setGeneratedText(text);
-    } catch (error) {
-      console.error(error);
-      setGeneratedText('Error generating text');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-
   const onDocumentLoadSuccess = (pdf: any) => {
-    pdf.getPage(1).then((page: any) => {
-      page.getTextContent().then((textContent: any) => {
-        const extractedText = textContent.items
-          .map((item: any) => item.str)
-          .join(' ');
-        setText(extractedText);
+    setNumPages(pdf.numPages);
+    const pagesPromises = [];
+  
+    // Iterate through all pages
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pagePromise = pdf.getPage(i).then((page: any) => {
+        return page.getTextContent().then((textContent: any) => {
+          // Extract text content for each row and join with line breaks
+          return textContent.items
+            .map((item: any) => item.str)
+            .join(' ');
+        });
       });
+      pagesPromises.push(pagePromise);
+    }
+  
+    // Once all pages are processed
+    Promise.all(pagesPromises).then((pagesText) => {
+      // Each page's text will now be a separate string in the array
+      setText(pagesText.join('\n\n--- Page Break ---\n\n')); // Store the entire text with page breaks in state
     });
+  };
+
+  // Function to handle downloading text as a .txt file
+  const downloadTextFile = () => {
+    const blob = new Blob([text], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'extracted-text.txt';
+    link.click();
   };
 
   useEffect(() => {
@@ -125,38 +112,33 @@ export default function Home() {
   }, []);
 
   return (
-    <>
-      <div className="min-h-full bg-base-100 md:flex justify-center">
-        {/* Hero Section */}
-        <section
-          className="flex flex-col items-center justify-start py-10 bg-base-100 space-y-10"
-        >
-          <h1 className="text-4xl lg:text-6xl font-bold mb-4 text-primary-content text-center md:text-left lg:text-left z-10 opacity-90">
-          </h1>
-          <p className="text-xl mb-8 text-black text-center md:text-left font-semibold z-10">
-            PDF Converter
-          </p>
-          <div className="flex items-center justify-center w-96">
-            {file ? (     
-              <>    
-                <div className='card shadow w-full'>
-                  <div className='flex justify-between p-2 px-4'>
-                    <p className='text-black text-sm'>{file.name}</p>
-                    <button onClick={clearFile}>
-                      <XIcon className='w-5 h-5 text-red-500' />
-                    </button>
-                  </div>
-                  <div className="card shadow w-full">
-                    <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
-                    </Document>
-                    <div className="card shadow w-full mt-4 text-black">
-                      <h3>Extracted Text:</h3>
-                      <p>{text}</p>
+    <>  
+      <div className='bg-base-100 px-4 py-5 border-b'>
+        <h1 className="text-md font-semibold text-black z-10 opacity-90">
+          PDF Playground
+        </h1>
+      </div>
+      <div className="min-h-full bg-base-100">
+
+        {/* Container for the three sections */}
+        <div className="flex w-full md:flex justify-center justify-between items-start space-x-10">
+  
+          {/* Middle Section (Upload Area) */}
+          <section className="flex flex-col items-center justify-start bg-base-100 space-y-10 w-2/3">
+            <div className="flex items-center justify-center w-full p-4">
+              {file ? (
+                <>
+                  <div className="w-full h-full">
+                    <div className="w-full p-2 text-black">
+                      <div className="card shadow w-full">
+                        <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
+                          <Page pageNumber={1} className="overflow-hidden" />
+                        </Document>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </> 
-            ) : (
+                </>
+              ) : (
                 <label
                   htmlFor="dropzone-file"
                   className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-base-300 rounded-lg cursor-pointer text-black hover:bg-base-200"
@@ -171,24 +153,31 @@ export default function Home() {
                   <input
                     id="dropzone-file"
                     type="file"
+                    accept="application/pdf"
                     className="hidden"
                     onChange={handleFileChange}
                   />
                 </label>
-                )}
-              </div>
-            <form onSubmit={handleSubmit}>
-              <button disabled={loading} className='btn btn-secondary w-full' type="submit">
-                {loading ? 'Generating...' : 'Convert PDF to Text'}
+              )}
+            </div>
+          </section>
+  
+          {/* Right Section (Buttons and Progress Bar) */}
+          <section className="flex-1 flex flex-col space-y-4 p-4 w-full">
+            {/* <form onSubmit={handleSubmit}>
+              <button disabled={loading} className="btn btn-sm w-full" type="submit">
+                {loading ? 'Generating...' : 'Download as Text'}
               </button>
-            </form>
-          {loading && <progress className="progress w-56" value={uploadProgress} max="100"></progress>}
-          {/* {text &&
-            <button className='btn btn-primary w-40' type="submit">
-              Download File
+            </form> */}
+            {loading && (
+              <progress className="progress w-full" value={uploadProgress} max="100"></progress>
+            )}
+            {/* Conditionally render download button if text is generated */}
+            <button className="btn btn-primary w-full" onClick={downloadTextFile} disabled={!text}>
+              Download Extracted Text
             </button>
-          } */}
-        </section>
+          </section>
+        </div>
       </div>
     </>
   );

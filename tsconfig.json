@@ -36,7 +36,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/app/chat/page.jsx"
-, "src/app/standalone/MyComponent.jsx"  ],
+, "src/app/standalone/MyComponent.jsx", "src/app/components/botContainer.jsx"  ],
   "exclude": [
     "node_modules"
   ]

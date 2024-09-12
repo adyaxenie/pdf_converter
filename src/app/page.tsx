@@ -3,12 +3,16 @@ import { useResizeObserver } from '@wojtekmaj/react-hooks';
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
-import { UploadCloud, XIcon, PlusIcon } from 'lucide-react';
+import { UploadCloud, XIcon, PlusIcon, Truck, RotateCcw, FileText} from 'lucide-react';
 import { Document, Page } from 'react-pdf';
 import { pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import {useDropzone} from 'react-dropzone'
+import Tesseract from 'tesseract.js';
+import ResponseTable from './components/responseTable';
+import 'core-js/full/promise/with-resolvers.js';
 
 const options = {
   cMapUrl: '/cmaps/',
@@ -20,18 +24,21 @@ const resizeObserverOptions = {};
 const maxWidth = 800;
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
+  'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
+  import.meta.url
 ).toString();
+
 
 import BotContainer from './components/botContainer';
 
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { on } from 'events';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState('');
+  const [responseText, setResponseText] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [numPages, setNumPages] = useState<number>();
@@ -53,13 +60,32 @@ export default function Home() {
     setText('');
   };
 
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length) {
+      setFile(acceptedFiles[0]);
+    }
+  }, [])
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop})
+
   const handleFileChange = (event: any) => {
-    setLoading(true);
     const selectedFile = event.target.files?.[0] || null;
     setFile(selectedFile);
     console.log(selectedFile);
-    setLoading(false);
   };
+
+  const convertText = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.post('/api/chat', { prompt: text });
+      setResponseText(response.data.text);
+      console.log(response.data.text);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+
+  }
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -95,28 +121,66 @@ export default function Home() {
     }
   };
 
-  const onDocumentLoadSuccess = (pdf: any) => {
+  const onDocumentLoadSuccess = async (pdf: any) => {
     setNumPages(pdf.numPages);
     const pagesPromises = [];
   
     // Iterate through all pages
     for (let i = 1; i <= pdf.numPages; i++) {
-      const pagePromise = pdf.getPage(i).then((page: any) => {
-        return page.getTextContent().then((textContent: any) => {
-          // Extract text content for each row and join with line breaks
-          return textContent.items
-            .map((item: any) => item.str)
-            .join(' ');
-        });
+      const page = await pdf.getPage(i);
+  
+      // Try to get text content
+      const pagePromise = page.getTextContent().then((textContent: any) => {
+        const extractedText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ');
+  
+        // If extracted text is empty, fall back to Tesseract
+        if (extractedText.trim().length === 0) {
+          return renderPageToImageAndUseTesseract(page);
+        }
+  
+        return extractedText;
       });
+  
       pagesPromises.push(pagePromise);
     }
   
+    // Once all pages have been processed, join the extracted text
     Promise.all(pagesPromises).then((pagesText) => {
-      setText(pagesText.join('\n\n--- Page Break ---\n\n')); // Store the entire text with page breaks in state
+      setText(pagesText.join('\n\n--- Page Break ---\n\n')); // Store the entire text with page breaks
+      setLoading(false);
     });
-    setLoading(false);
   };
+  
+  const renderPageToImageAndUseTesseract = async (page: any) => {
+    const viewport = page.getViewport({ scale: 1 });
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+  
+    const renderContext = {
+      canvasContext: context,
+      viewport: viewport,
+    };
+  
+    // Await the rendering task directly
+    const renderTask = page.render(renderContext);
+    await renderTask.promise; // This is where the PDFRenderTask object has a `promise` property
+  
+    // Convert the canvas to an image (data URL)
+    const dataUrl = canvas.toDataURL();
+  
+    // Use Tesseract.js to extract text from the image
+    const { data: { text } } = await Tesseract.recognize(dataUrl, 'eng');
+    return text;
+  };
+
+  const [rotation, setRotation] = useState(0);
+  const rotateFile = () => {
+    setRotation((prevRotation) => (prevRotation + 90) % 360);
+  }
 
   // Function to handle downloading text as a .txt file
   const downloadTextFile = () => {
@@ -137,23 +201,23 @@ export default function Home() {
   }, []);
 
   return (
-    <div className='h-screen'>  
-      <div className='bg-base-100 px-4 py-5 border-b'>
-        <h1 className="text-md font-semibold text-black z-10 opacity-90">
-          PDF Playground | Data Extraction Tool
+    <div className='h-screen bg-base-100'>  
+      <div className='bg-base-100 px-4 py-5'>
+        <h1 className="text-md font-semibold text-black z-10 opacity-90 flex items-center">
+          <FileText className="w-8 h-8 mr-2 text-black" />
+          PDF Data Extractor
         </h1>
       </div>
-      <div className="min-h-full bg-base-100">
 
         {/* Container for the three sections */}
-        <div className="w-full justify-center px-20 py-10 space-y-5">
+        <div className="w-full h-1/2 flex justify-center space-y-5">
           {/* Middle Section (Upload Area) */}
-            <div className="flex items-center justify-center w-full p-4">
+            <div className="flex items-center justify-center w-3/4 p-4">
               {file ? (
                 <>
                   <div className="w-full h-full flex justify-center items-center"> {/* Centering */}
                     <div>
-                      <div className="card shadow-xl w-[300px] mx-auto">
+                      <div className="card shadow-xl w-[300px] mx-auto rounded-lg">
                         {loading ? (
                          <span className="loading loading-spinner loading-lg"></span>
                         ) : (
@@ -162,20 +226,23 @@ export default function Home() {
                             <Page
                               pageNumber={1}
                               width={containerWidth ? Math.min(containerWidth, maxWidth) : maxWidth}
+                              rotate={rotation}
                             />
                           </Document>
                         </div>
                         )}
                       </div>
                       <p className='text-gray-700 mt-5'>{file.name}</p>
-                      <p className='text-gray-700 font-light'>{numPages} pages</p>
+                      {numPages && (
+                        <p className='text-gray-700 font-light'>{numPages === 1 ? '1 page' : `${numPages} pages`}</p>
+                      )}
                     </div>
                   </div>
                 </>
               ) : (
                 <label
                   htmlFor="dropzone-file"
-                  className="flex flex-col items-center justify-center w-1/2 h-64 border-2 border-dashed border-base-300 rounded-lg cursor-pointer text-black hover:bg-base-200"
+                  className="flex flex-col items-center justify-center w-3/4 h-full p-10 cursor-pointer text-black"
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <UploadCloud className="w-8 h-8 mb-4 text-base-content" />
@@ -184,26 +251,8 @@ export default function Home() {
                     </p>
                     <p className="text-xs text-base-content">PDF (MAX. 100mb)</p>
                   </div>
-                  <input
-                    id="dropzone-file"
-                    type="file"
-                    accept="application/pdf"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                </label>
-              )}
-            </div>
-
-            {file && loading && (
-              <div className='flex justify-center'>
-              <progress className="progress w-56"></progress>
-              {/* <progress className="progress w-full text-neutral" value={uploadProgress} max="100"></progress> */}
-              </div>
-            )}
-            {!text && (
-              <div className='flex justify-center'>
-                <label className="btn btn-primary btn-lg w-60 cursor-pointer">
+                  <div className='flex justify-center'>
+                <label className="btn btn-secondary text-white btn-lg w-60 cursor-pointer font-bold">
                   <PlusIcon className="w-6 h-6" />
                   Add File
                   <input 
@@ -214,23 +263,53 @@ export default function Home() {
                   />
                 </label>
               </div>
-            )}
-            {text && (
-            <div className='flex justify-center'>
-              <button className="btn btn-secondary" onClick={downloadTextFile} disabled={!text}>
-                Download Raw Text
-              </button>
-              <button className="btn btn-secondary ml-2" disabled={!text}>
-                Extract Data using OCR
-              </button>
+                  <input
+                    id="dropzone-file"
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </label>
+              )}
             </div>
-            )}
-            {/* <div>
-              <p className='text-black'>Serverless File Data Processing and Conversion</p>
-            </div> */}
+            {loading && (
+                <div className='flex justify-center'>
+                <progress className="progress w-56"></progress>
+                {/* <progress className="progress w-full text-neutral" value={uploadProgress} max="100"></progress> */}
+                </div>
+              )}
+            <div className='w-1/4 bg-base-200 rounded p-5'>
+              {text && (
+              <div className='flex justify-center'>
+                <button className="btn btn-secondary" onClick={downloadTextFile}>
+                  Download Raw Text
+                </button>
+                <button className="btn btn-secondary" onClick={convertText}>
+                  Convert to table
+                </button>
+              </div>
+              )}
+              {file && !text && !loading && (
+                <div className='flex justify-center'>
+                  <p className='text-gray-700'>No text found. Use pdf image processing to extract data.</p>
+                  <button className="btn btn-secondary ml-2">
+                    Extract Data
+                  </button>
+                  <button
+                  className="btn btn-secondary mt-5"
+                  onClick={() => (rotateFile(),  onDocumentLoadSuccess(file))}
+                  title="Rotate PDF"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </button>
+                </div>
+              )}
+            </div>
         </div>
+        {responseText && (
+          ResponseTable({ responseText })
+        )}
       </div>
-      <BotContainer />
-    </div>
   );
 };

@@ -5,6 +5,7 @@ import SessionProvider from "./components/sessionProvider";
 import { ReactNode } from 'react'
 import { Analytics } from "@vercel/analytics/react"
 import type { Metadata } from 'next'
+import './polyfills'
 
 export const metadata: Metadata = {
   title: 'PDF to Table',

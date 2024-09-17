@@ -13,6 +13,8 @@ import {useDropzone} from 'react-dropzone'
 import Tesseract from 'tesseract.js';
 import ResponseTable from './components/responseTable';
 import 'core-js/full/promise/with-resolvers.js';
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 const options = {
   cMapUrl: '/cmaps/',
@@ -28,16 +30,10 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString();
 
-
-import BotContainer from './components/botContainer';
-
-import AOS from "aos";
-import "aos/dist/aos.css";
-import { on } from 'events';
-
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState('');
+  const [json, setJson] = useState('');
   const [responseText, setResponseText] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -78,7 +74,8 @@ export default function Home() {
       setLoading(true);
       const response = await axios.post('/api/chat', { prompt: text });
       setResponseText(response.data.text);
-      console.log(response.data.text);
+      setJson(response.data.json);
+      console.log(response.data);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -87,41 +84,8 @@ export default function Home() {
 
   }
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!file) {
-      alert('Please select a file before submitting.');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      setLoading(true);
-      setUploadProgress(0);
-
-      const response = await axios.post('/api/convert', formData, {
-        onUploadProgress: (progressEvent) => {
-          const { loaded, total } = progressEvent;
-          if (total) {
-            const percentCompleted = Math.round((loaded * 100) / total);
-            setUploadProgress(percentCompleted);
-          }
-        }
-      });
-
-      const binaryData = response.data.text;
-      setText(binaryData);
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const onDocumentLoadSuccess = async (pdf: any) => {
+    setLoading(true);
     setNumPages(pdf.numPages);
     const pagesPromises = [];
   
@@ -151,6 +115,8 @@ export default function Home() {
       setText(pagesText.join('\n\n--- Page Break ---\n\n')); // Store the entire text with page breaks
       setLoading(false);
     });
+
+    setLoading(false);
   };
   
   const renderPageToImageAndUseTesseract = async (page: any) => {
@@ -208,19 +174,18 @@ export default function Home() {
           PDF Data Extractor
         </h1>
       </div>
+      {loading && (
+      <progress className="progress w-full"></progress>
+        )}
 
         {/* Container for the three sections */}
-        <div className="w-full h-1/2 flex justify-center space-y-5">
           {/* Middle Section (Upload Area) */}
-            <div className="flex items-center justify-center w-3/4 p-4">
+            <div className="flex items-center justify-center w-full p-4">
               {file ? (
                 <>
-                  <div className="w-full h-full flex justify-center items-center"> {/* Centering */}
+                  <div className="w-full flex justify-center items-center"> {/* Centering */}
                     <div>
                       <div className="card shadow-xl w-[300px] mx-auto rounded-lg">
-                        {loading ? (
-                         <span className="loading loading-spinner loading-lg"></span>
-                        ) : (
                         <div className="Example__container__document" ref={setContainerRef}>
                           <Document file={file} onLoadSuccess={onDocumentLoadSuccess} options={options}>
                             <Page
@@ -230,7 +195,6 @@ export default function Home() {
                             />
                           </Document>
                         </div>
-                        )}
                       </div>
                       <p className='text-gray-700 mt-5'>{file.name}</p>
                       {numPages && (
@@ -273,43 +237,27 @@ export default function Home() {
                 </label>
               )}
             </div>
-            {loading && (
-                <div className='flex justify-center'>
-                <progress className="progress w-56"></progress>
-                {/* <progress className="progress w-full text-neutral" value={uploadProgress} max="100"></progress> */}
-                </div>
-              )}
-            <div className='w-1/4 bg-base-200 rounded p-5'>
+            <div className='w-full flex justify-center bg-base-100 rounded p-5'>
               {text && (
               <div className='flex justify-center'>
                 <button className="btn btn-secondary" onClick={downloadTextFile}>
                   Download Raw Text
                 </button>
-                <button className="btn btn-secondary" onClick={convertText}>
+                <button className="btn btn-secondary ml-2" onClick={convertText}>
                   Convert to table
                 </button>
               </div>
               )}
-              {file && !text && !loading && (
-                <div className='flex justify-center'>
-                  <p className='text-gray-700'>No text found. Use pdf image processing to extract data.</p>
-                  <button className="btn btn-secondary ml-2">
-                    Extract Data
-                  </button>
-                  <button
-                  className="btn btn-secondary mt-5"
-                  onClick={() => (rotateFile(),  onDocumentLoadSuccess(file))}
-                  title="Rotate PDF"
-                >
-                  <RotateCcw className="w-5 h-5" />
-                </button>
-                </div>
-              )}
             </div>
-        </div>
-        {responseText && (
-          ResponseTable({ responseText })
-        )}
+            {responseText && (
+              <div>
+                <p className='text-black'>{responseText}</p>
+                <p className='text-black'>{json ? JSON.stringify(json, null, 2) : ''}</p>
+                <ResponseTable responseText={json} />
+              </div>
+            )}
+
+        {/* <script src="https://supbot.io/dist/bot-embed.js" data-bot-id="549616c5-052f-4145-929a-95d59f1023fb" data-bot-open="false" data-theme="emerald"></script> */}
       </div>
   );
 };

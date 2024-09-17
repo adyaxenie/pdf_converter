@@ -29,7 +29,7 @@ const ResponseTable: React.FC<TableProps> = ({ responseText }) => {
 
   return (
     <div className="overflow-x-auto">
-      <table className="table-auto border-collapse border border-gray-300">
+      <table className="table-auto border-collapse border border-gray-300 text-black">
         <thead>
           <tr>
             {Object.keys(parsedResponseText[0]).map((key) => (

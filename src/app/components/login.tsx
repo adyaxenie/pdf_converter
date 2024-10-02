@@ -24,17 +24,17 @@ function Authbutton() {
   return (
     <>
       {/* Redirect to SignIn component */}
-      <button
-        className="btn text-primary-content mr-2 bg-transparent border-none"
+      {/* <button
+        className="btn btn-sm text-primary-content mr-2 bg-transparent border-none"
         onClick={() => signIn()}
       >
         Login
-      </button>
+      </button> */}
       <button
-        className="btn btn-primary text-neutral-content w-32"
+        className="btn btn-sm border-black hover:blue bg-white text-black w-32"
         onClick={() => signIn()}
       >
-        Get Started
+        Login
       </button>
     </>
   );

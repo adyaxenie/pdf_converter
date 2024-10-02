@@ -15,6 +15,7 @@ import ResponseTable from './components/responseTable';
 import 'core-js/full/promise/with-resolvers.js';
 import AOS from "aos";
 import "aos/dist/aos.css";
+import NavBar from './components/navBar';
 
 const options = {
   cMapUrl: '/cmaps/',
@@ -168,17 +169,10 @@ export default function Home() {
 
   return (
     <div className='h-screen bg-base-100'>  
-      <div className='bg-base-100 px-4 py-5'>
-        <h1 className="text-md font-semibold text-black z-10 opacity-90 flex items-center">
-          <FileText className="w-8 h-8 mr-2 text-black" />
-          PDF Data Extractor
-        </h1>
-      </div>
-      {loading && (
-      <progress className="progress w-full"></progress>
+        <NavBar />
+        {loading && (
+          <progress className="progress w-full"></progress>
         )}
-
-        {/* Container for the three sections */}
           {/* Middle Section (Upload Area) */}
             <div className="flex items-center justify-center w-full p-4">
               {file ? (
@@ -211,7 +205,7 @@ export default function Home() {
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <UploadCloud className="w-8 h-8 mb-4 text-base-content" />
                     <p className="mb-2 text-sm text-base-content">
-                      <span className="font-semibold">Click to upload</span> or drag and drop
+                      <span className="font-semibold">Click to upload</span>
                     </p>
                     <p className="text-xs text-base-content">PDF (MAX. 100mb)</p>
                   </div>

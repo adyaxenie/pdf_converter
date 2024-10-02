@@ -15,10 +15,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html data-theme="emerald" className="custom-scrollbar">
-      <body className="bg-base-200">
-      <Analytics/>
-          {children}
-      </body>
+        <SessionProvider>
+        <body className="bg-base-200">
+        <Analytics/>
+            {children}
+        </body>
+      </SessionProvider>
     </html>
 
   )

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image';
 import Login from '../components/login';
 import ProfileModal from './profileModal';
+import { FileText } from 'lucide-react';
 
 const NavBar: React.FC = () => {
     const { data: session } = useSession();
@@ -31,17 +32,21 @@ const NavBar: React.FC = () => {
         <div className='lg:mx-60'>
             <div className="navbar bg-base-100 px-10 py-4">
                 <div className="flex-1">
-                    <Image
-                        src=""
-                        alt="logo"
-                        width={40}
-                        height={25} 
-                    />
-                    <a className="btn btn-ghost text-xl text-black font-semibold z-10" onClick={() => router.push('/')}>name</a>
+                    <div className='bg-base-100 px-4 py-5' onClick={() => router.push('/')}>
+                        <h1 className="text-md font-semibold text-black z-10 opacity-90 flex items-center">
+                        <FileText className="w-8 h-8 mr-2 text-black" />
+                        PDF Data Extractor
+                        </h1>
+                    </div>
                 </div>
-                <div className="flex-1 hidden sm:block">
+                {/* <div className="flex-1 hidden sm:block">
                     <a className="btn btn-ghost text-xl text-primary-content" onClick={() => scrollToSection("pricing")}>Pricing</a>
                     <a className="btn btn-ghost text-xl text-primary-content" onClick={() => scrollToSection("faq")}>FAQ</a>
+                </div> */}
+                <div className='mr-5'>
+                    <div className="badge  badge-lg badge-secondary badge-outline p-4">
+                    <p className='ml-2 font-medium'>0 / 20 credits</p>
+                    </div>
                 </div>
                 {session ? (
                 <div className="dropdown dropdown-bottom dropdown-end z-10">

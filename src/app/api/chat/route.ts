@@ -41,17 +41,18 @@ export async function POST(request: NextRequest) {
 
     let extractedJson;
     try {
-      // Updated regex to account for newlines and possible JSON structures
-      const jsonMatch = aiResponse.match(/\[.*?\]|\{.*?\}/s);
+      // Regex to extract the content between the code block markers (```)
+      const jsonMatch = aiResponse.match(/```json([\s\S]*?)```/);
       if (jsonMatch) {
-        extractedJson = JSON.parse(jsonMatch[0]);
+        const cleanedResponse = jsonMatch[1].trim(); // Get the JSON content within the backticks
+        extractedJson = JSON.parse(cleanedResponse); // Parse the extracted JSON
       } else {
-        extractedJson = { error: 'No JSON found in the AI response' };
+        extractedJson = { error: 'No JSON block found in the AI response' };
       }
     } catch (jsonError) {
       console.error('Error parsing JSON from AI response:', jsonError);
       extractedJson = { error: 'Failed to parse JSON from AI response' };
-    }    
+    }
 
     return NextResponse.json({ text: aiResponse, json: extractedJson });
   } catch (error) {

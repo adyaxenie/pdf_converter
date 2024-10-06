@@ -4,11 +4,13 @@ import { createClient } from '../../../utils/supabase/client';
 const supabase = createClient();
 
 export async function POST(request: Request) {
-  const { user_email, api_key } = await request.json();
+  const { user_email, credits } = await request.json();
+
+  const updatedCredits = credits - 1;
 
   const { data, error } = await supabase
     .from('user_profiles')
-    .update([{ 'openai_api_key': api_key}])
+    .update([{ 'credits': updatedCredits}])
     .eq('email', user_email)
     .select()
 

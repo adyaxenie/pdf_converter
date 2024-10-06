@@ -53,7 +53,7 @@ const SignIn = () => {
             onClick={() => signIn("google", { callbackUrl: "/" })}
             className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-black font-semibold rounded-lg shadow-md bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
           >
-            <img src="/search.png" alt="Google Logo" className="w-5 h-5 mr-2" />
+            {/* <img src="/search.png" alt="Google Logo" className="w-5 h-5 mr-2" /> */}
             Sign in with Google
           </button>
 
@@ -65,74 +65,6 @@ const SignIn = () => {
             Sign in with GitHub
           </button>
         </div>
-
-        {/* Divider */}
-        <div className="flex items-center justify-between mt-6">
-          <span className="border-b border-gray-300 w-full"></span>
-          <span className="px-3 text-gray-500">or</span>
-          <span className="border-b border-gray-300 w-full"></span>
-        </div>
-
-        {/* Email/Password Sign-In Form */}
-        <form className="mt-4" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            {/* <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div> */}
-          </div>
-
-          <div className="mt-6">
-            <button
-              type="submit"
-              className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Sign in with email
-            </button>
-          </div>
-        </form>
-
-        {/* Forgot Password Link */}
-        {/* <div className="mt-4 text-center">
-          <a href="#" className="text-sm text-blue-600 hover:text-blue-500">
-            Forgot your password?
-          </a>
-        </div> */}
       </div>
     </div>
   );

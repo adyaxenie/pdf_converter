@@ -1,6 +1,7 @@
 'use client';
 import { useResizeObserver } from '@wojtekmaj/react-hooks';
 import { useEffect, useState, useCallback } from 'react'
+import { signIn, signOut, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import { UploadCloud, XIcon, PlusIcon, Truck, RotateCcw, FileText} from 'lucide-react';
@@ -16,6 +17,7 @@ import 'core-js/full/promise/with-resolvers.js';
 import AOS from "aos";
 import "aos/dist/aos.css";
 import NavBar from './components/navBar';
+import { set } from 'zod';
 
 const options = {
   cMapUrl: '/cmaps/',
@@ -42,6 +44,26 @@ export default function Home() {
   const [containerRef, setContainerRef] = useState<HTMLElement | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>();
 
+  const [tier, setTier] = useState(0);
+  const [credits, setCredits] = useState(0);
+
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (session) {
+        profileCheck();
+      }
+    }
+  , [session]);
+
+  const profileCheck = async () => {
+    const email = session?.user?.email;
+    const userProfileResponse = await axios.post('/api/profile/get', { user_email: email });
+    const userProfile = userProfileResponse.data.data;
+    console.log(userProfile);
+    setTier(userProfile.tier);
+  }
+
   const onResize = useCallback<ResizeObserverCallback>((entries) => {
     const [entry] = entries;
 
@@ -62,12 +84,12 @@ export default function Home() {
       setFile(acceptedFiles[0]);
     }
   }, [])
+  
   const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop})
 
   const handleFileChange = (event: any) => {
     const selectedFile = event.target.files?.[0] || null;
     setFile(selectedFile);
-    console.log(selectedFile);
   };
 
   const convertText = async () => {
@@ -76,11 +98,18 @@ export default function Home() {
       const response = await axios.post('/api/chat', { prompt: text });
       setResponseText(response.data.text);
       setJson(response.data.json);
-      console.log(response.data);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+    }
+
+    try {
+      const response = await axios.post('/api/profile/update_credits', { credits: credits, user_email: session?.user?.email });
+      setCredits(response.data.data.credits);
+      console.log(response);
+    } catch (error) {
+      console.error('Error:', error);
     }
 
   }

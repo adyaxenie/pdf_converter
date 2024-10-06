@@ -6,11 +6,29 @@ import Image from 'next/image';
 import Login from '../components/login';
 import ProfileModal from './profileModal';
 import { FileText } from 'lucide-react';
+import axios from 'axios';
+import { set } from 'zod';
 
 const NavBar: React.FC = () => {
     const { data: session } = useSession();
     const router = useRouter();
     const [isProfileModalOpen, setProfileModalOpen] = useState(false);
+    const [credits, setCredits] = useState(0);
+
+    useEffect(() => {
+        if (session) {
+            profileCheck();
+          }
+        }
+      , [session]);
+    
+      const profileCheck = async () => {
+        const email = session?.user?.email;
+        const userProfileResponse = await axios.post('/api/profile/get', { user_email: email });
+        const userProfile = userProfileResponse.data.data;
+        console.log(userProfile);
+        setCredits(userProfile.credits);
+      }
 
     const handleProfileClick = () => {
         setProfileModalOpen(true);
@@ -45,7 +63,7 @@ const NavBar: React.FC = () => {
                 </div> */}
                 <div className='mr-5'>
                     <div className="badge  badge-lg badge-secondary badge-outline p-4">
-                    <p className='ml-2 font-medium'>0 / 20 credits</p>
+                    <p className='ml-2 font-medium'>{credits} credits</p>
                     </div>
                 </div>
                 {session ? (

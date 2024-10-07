@@ -9,11 +9,15 @@ import { FileText } from 'lucide-react';
 import axios from 'axios';
 import { set } from 'zod';
 
-const NavBar: React.FC = () => {
+interface NavBarProps {
+    credits: number;
+    setCredits: (credits: number) => void;
+}
+
+const NavBar: React.FC<NavBarProps> = ({ credits, setCredits }) => {
     const { data: session } = useSession();
     const router = useRouter();
     const [isProfileModalOpen, setProfileModalOpen] = useState(false);
-    const [credits, setCredits] = useState(0);
 
     useEffect(() => {
         if (session) {

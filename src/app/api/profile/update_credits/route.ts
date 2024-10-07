@@ -10,10 +10,9 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from('user_profiles')
-    .update([{ 'credits': updatedCredits}])
+    .update([{ 'credits': updatedCredits }])
     .eq('email', user_email)
     .select()
-
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

@@ -44,6 +44,8 @@ export default function Home() {
   const [containerRef, setContainerRef] = useState<HTMLElement | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>();
 
+  const [flowStage, setFlowStage] = useState(0);
+
   const [tier, setTier] = useState(0);
   const [credits, setCredits] = useState(0);
 
@@ -62,6 +64,7 @@ export default function Home() {
     const userProfile = userProfileResponse.data.data;
     console.log(userProfile);
     setTier(userProfile.tier);
+    setCredits(userProfile.credits);
   }
 
   const onResize = useCallback<ResizeObserverCallback>((entries) => {
@@ -93,26 +96,43 @@ export default function Home() {
   };
 
   const convertText = async () => {
+    if (credits <= 0) {
+      alert('Insufficient credits. Cannot perform this operation.');
+      return;
+    }
+  
+    setLoading(true);
+  
     try {
-      setLoading(true);
       const response = await axios.post('/api/chat', { prompt: text });
       setResponseText(response.data.text);
       setJson(response.data.json);
+  
+      await updateCredits();
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error during text conversion:', error);
     } finally {
       setLoading(false);
     }
-
+  };
+  
+  const updateCredits = async () => {
     try {
+      console.log('Updating credits', credits);
       const response = await axios.post('/api/profile/update_credits', { credits: credits, user_email: session?.user?.email });
-      setCredits(response.data.data.credits);
-      console.log(response);
+  
+      if (response.data.error) {
+        console.error('Error updating credits:', response.data.error);
+        alert(response.data.error);
+        return;
+      }
+  
+      setCredits(response.data.data[0].credits);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error updating credits:', error);
     }
-
-  }
+  };
+  
 
   const onDocumentLoadSuccess = async (pdf: any) => {
     setLoading(true);
@@ -198,7 +218,7 @@ export default function Home() {
 
   return (
     <div className='h-screen bg-base-100'>  
-        <NavBar />
+        <NavBar credits={credits} setCredits={setCredits} />
         {loading && (
           <progress className="progress w-full"></progress>
         )}
@@ -273,9 +293,9 @@ export default function Home() {
               )}
             </div>
             {responseText && (
-              <div>
-                <p className='text-black'>{responseText}</p>
-                <p className='text-black'>{json ? JSON.stringify(json, null, 2) : ''}</p>
+              <div className="flex items-center justify-center w-full p-4">
+                {/* <p className='text-black'>{responseText}</p>
+                <p className='text-black'>{json ? JSON.stringify(json, null, 2) : ''}</p> */}
                 <ResponseTable responseText={json} />
               </div>
             )}

@@ -50,11 +50,11 @@ const NavBar: React.FC<NavBarProps> = ({ credits, setCredits }) => {
     }
 
     return (
-        <div className='bg-base-100'>
-        <div className='lg:mx-60'>
-            <div className="navbar bg-base-100 px-10 py-4">
+        <div className='bg-base-100 border-b shadow-sm'>
+        <div className='lg:ml-60'>
+            <div className="navbar bg-base-100 px-10">
                 <div className="flex-1">
-                    <div className='bg-base-100 px-4 py-5' onClick={() => router.push('/')}>
+                    <div className='bg-base-100 px-4 py-2' onClick={() => router.push('/')}>
                         <h1 className="text-md font-semibold text-black z-10 opacity-90 flex items-center">
                         <FileText className="w-8 h-8 mr-2 text-black" />
                         PDF Data Extractor
@@ -71,7 +71,7 @@ const NavBar: React.FC<NavBarProps> = ({ credits, setCredits }) => {
                     </div>
                 </div>
                 {session ? (
-                <div className="dropdown dropdown-bottom dropdown-end z-10">
+                <div className="dropdown dropdown-sm dropdown-bottom dropdown-end z-10">
                     <div tabIndex={0} role="button" className="btn m-1">{session?.user?.email}</div>
                     <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
                         <li><a className="text-primary-content" onClick={() => signOut()}>Logout</a></li>

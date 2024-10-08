@@ -24,12 +24,12 @@ const ResponseTable: React.FC<TableProps> = ({ responseText }) => {
   }
 
   if (!Array.isArray(parsedResponseText) || parsedResponseText.length === 0) {
-    return <p>No data available to display.</p>;
+    return <p className='text-black'>No data available to display.</p>;
   }
 
   return (
     <div className="overflow-x-auto">
-      <table className="table-auto border-collapse border border-gray-300 text-black">
+      <table className="table-auto border-collapse border border-gray-300 border-rounded text-black">
         <thead>
           <tr>
             {Object.keys(parsedResponseText[0]).map((key) => (
@@ -39,7 +39,7 @@ const ResponseTable: React.FC<TableProps> = ({ responseText }) => {
             ))}
           </tr>
         </thead>
-        <tbody>
+        {/* <tbody>
           {parsedResponseText.map((row, index) => (
             <tr key={index}>
               {Object.values(row).map((value, idx) => (
@@ -49,7 +49,7 @@ const ResponseTable: React.FC<TableProps> = ({ responseText }) => {
               ))}
             </tr>
           ))}
-        </tbody>
+        </tbody> */}
       </table>
     </div>
   );

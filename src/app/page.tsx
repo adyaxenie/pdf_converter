@@ -207,6 +207,12 @@ export default function Home() {
     link.click();
   };
 
+  const handleRemoveFile = () => {
+    setFile(null)
+    setText('')
+    setNumPages(0)
+  };
+
   useEffect(() => {
     AOS.init({
       once: true,
@@ -216,49 +222,65 @@ export default function Home() {
     });
   }, []);
 
+  const [activeTab, setActiveTab] = useState('rawText');
+
   return (
-    <div className='h-screen bg-base-100'>  
-        <NavBar credits={credits} setCredits={setCredits} />
-        {loading && (
-          <progress className="progress w-full"></progress>
-        )}
-          {/* Middle Section (Upload Area) */}
-            <div className="flex items-center justify-center w-full p-4">
-              {file ? (
-                <>
-                  <div className="w-full flex justify-center items-center"> {/* Centering */}
-                    <div>
-                      <div className="card shadow-xl w-[300px] mx-auto rounded-lg">
-                        <div className="Example__container__document" ref={setContainerRef}>
-                          <Document file={file} onLoadSuccess={onDocumentLoadSuccess} options={options}>
-                            <Page
-                              pageNumber={1}
-                              width={containerWidth ? Math.min(containerWidth, maxWidth) : maxWidth}
-                              rotate={rotation}
-                            />
-                          </Document>
-                        </div>
-                      </div>
-                      <p className='text-gray-700 mt-5'>{file.name}</p>
-                      {numPages && (
-                        <p className='text-gray-700 font-light'>{numPages === 1 ? '1 page' : `${numPages} pages`}</p>
-                      )}
-                    </div>
+    <div className='h-screen bg-base-100'>
+      {/* Header Section */}
+      <NavBar credits={credits} setCredits={setCredits} />
+      {loading && <progress className="progress w-full"></progress>}
+
+      {/* Main Container for Two-Column Layout */}
+      <div className="flex h-full">
+        {/* Left Section: PDF Upload and Preview */}
+        <div className="w-1/2 p-4 flex items-center justify-center">
+          {file ? (
+            <div className="w-full flex justify-center items-center">
+              <div>
+              <div className='flex space-x-2 justify-end m-4'>
+                    <button 
+                      className='btn btn-neutral btn-sm btn-outline text-red-500' 
+                      onClick={handleRemoveFile}
+                    >
+                      Remove File
+                    </button>
+                    <button 
+                      className='btn btn-neutral btn-sm btn-outline' 
+                      onClick={rotateFile}
+                    >
+                      Rotate File
+                    </button>
                   </div>
-                </>
-              ) : (
-                <label
-                  htmlFor="dropzone-file"
-                  className="flex flex-col items-center justify-center w-3/4 h-full p-10 cursor-pointer text-black"
-                >
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <UploadCloud className="w-8 h-8 mb-4 text-base-content" />
-                    <p className="mb-2 text-sm text-base-content">
-                      <span className="font-semibold">Click to upload</span>
-                    </p>
-                    <p className="text-xs text-base-content">PDF (MAX. 100mb)</p>
+                <div className="card shadow-xl w-[300px] mx-auto rounded-lg">
+                  <div className="Example__container__document" ref={setContainerRef}>
+                    <Document file={file} onLoadSuccess={onDocumentLoadSuccess} options={options}>
+                      <Page
+                        pageNumber={1}
+                        width={containerWidth ? Math.min(containerWidth, maxWidth) : maxWidth}
+                        rotate={rotation}
+                      />
+                    </Document>
                   </div>
-                  <div className='flex justify-center'>
+                </div>
+                <p className='text-black mt-5'>{file.name}</p>
+                {numPages && (
+                  <p className='text-black font-light'>{numPages === 1 ? '1 page' : `${numPages} pages`}</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <label
+              htmlFor="dropzone-file"
+              className="flex flex-col items-center justify-center w-full h-3/4 p-20 cursor-pointer text-black border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-400"
+            >
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <UploadCloud className="w-8 h-8 mb-4 text-base-content" />
+                <p className="mb-2 text-sm text-base-content">
+                  <span className="font-semibold">Click to upload</span>
+                </p>
+                <p className="text-xs text-base-content">PDF (MAX. 100mb)</p>
+              </div>
+              <div className='flex justify-center'>
                 <label className="btn btn-secondary text-white btn-lg w-60 cursor-pointer font-bold">
                   <PlusIcon className="w-6 h-6" />
                   Add File
@@ -270,37 +292,88 @@ export default function Home() {
                   />
                 </label>
               </div>
-                  <input
-                    id="dropzone-file"
-                    type="file"
-                    accept="application/pdf"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                </label>
-              )}
-            </div>
-            <div className='w-full flex justify-center bg-base-100 rounded p-5'>
-              {text && (
-              <div className='flex justify-center'>
-                <button className="btn btn-secondary" onClick={downloadTextFile}>
-                  Download Raw Text
-                </button>
-                <button className="btn btn-secondary ml-2" onClick={convertText}>
-                  Convert to table
-                </button>
-              </div>
-              )}
-            </div>
-            {responseText && (
-              <div className="flex items-center justify-center w-full p-4">
-                {/* <p className='text-black'>{responseText}</p>
-                <p className='text-black'>{json ? JSON.stringify(json, null, 2) : ''}</p> */}
-                <ResponseTable responseText={json} />
-              </div>
-            )}
+              <input
+                id="dropzone-file"
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </label>
+          )}
+        </div>
 
-        {/* <script src="https://supbot.io/dist/bot-embed.js" data-bot-id="549616c5-052f-4145-929a-95d59f1023fb" data-bot-open="false" data-theme="emerald"></script> */}
+        {/* Right Section: Tab Navigation and Content Switching */}
+        <div className="w-1/2 p-4 flex flex-col">
+          {/* Tab Navigation */}
+          <div role="tablist" className="tabs tabs-bordered mb-4">
+            <a 
+              role="tab" 
+              className={`tab ${activeTab === 'rawText' ? 'tab-active' : ''}`} 
+              onClick={() => setActiveTab('rawText')}
+            >
+              Raw Text
+            </a>
+            <a 
+              role="tab" 
+              className={`tab ${activeTab === 'convertedTable' ? 'tab-active' : ''}`} 
+              onClick={() => setActiveTab('convertedTable')}
+            >
+              Converted Table
+            </a>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'rawText' ? (
+            <div className='flex flex-col h-full'>
+              {/* Raw Text Display Area */}
+              <div className='bg-gray-100 p-6 border rounded-lg flex-1 overflow-hidden'>
+                {text ? (
+                  <textarea 
+                    className='w-full h-full p-2 text-black bg-white border rounded resize-none overflow-auto' 
+                    value={text} 
+                    readOnly 
+                  />
+                ) : (
+                  <p className='text-gray-500 text-center'>Upload a PDF to view the extracted text here.</p>
+                )}
+              </div>
+
+              {/* Action Buttons Positioned at the Bottom */}
+              {text && (
+                <div className='flex justify-end mt-auto p-4'>
+                  <button className="btn btn-secondary text-white mr-2" onClick={downloadTextFile}>
+                    Download Raw Text
+                  </button>
+                  <button className="btn btn-secondary text-white" onClick={convertText}>
+                    Convert to Table
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className='h-full flex flex-col'>
+              {/* Converted Table View */}
+              {!json ? (
+                <p className='text-gray-500 text-center flex-1'>No processed data available to display.</p>
+              ) : (
+                <div className='h-full overflow-auto'>
+                  <ResponseTable responseText={json} />
+                </div>
+              )}
+
+              {/* Save Button Positioned at the Bottom */}
+              {json && (
+                <div className='flex justify-end mt-auto p-4'>
+                  <button className='btn btn-primary'>
+                    Save Table Columns
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+    </div>
   );
 };

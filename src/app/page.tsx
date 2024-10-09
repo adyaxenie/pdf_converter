@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
-import { UploadCloud, XIcon, PlusIcon, Truck, RotateCcw, FileText} from 'lucide-react';
+import { UploadCloud, XIcon, PlusIcon, Truck, RotateCcw, FileText, Trash2 } from 'lucide-react';
 import { Document, Page } from 'react-pdf';
 import { pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
@@ -28,10 +28,7 @@ const resizeObserverOptions = {};
 
 const maxWidth = 800;
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -238,18 +235,8 @@ export default function Home() {
             <div className="w-full flex justify-center items-center">
               <div>
               <div className='flex space-x-2 justify-end m-4'>
-                    <button 
-                      className='btn btn-neutral btn-sm btn-outline text-red-500' 
-                      onClick={handleRemoveFile}
-                    >
-                      Remove File
-                    </button>
-                    <button 
-                      className='btn btn-neutral btn-sm btn-outline' 
-                      onClick={rotateFile}
-                    >
-                      Rotate File
-                    </button>
+                    <Trash2 className='w-4 h-4 text-red-500 cursor-pointer' onClick={handleRemoveFile}/>
+                    <RotateCcw className='w-4 h-4 text-black cursor-pointer' onClick={rotateFile}/>
                   </div>
                 <div className="card shadow-xl w-[300px] mx-auto rounded-lg">
                   <div className="Example__container__document" ref={setContainerRef}>
@@ -271,7 +258,7 @@ export default function Home() {
           ) : (
             <label
               htmlFor="dropzone-file"
-              className="flex flex-col items-center justify-center w-full h-3/4 p-20 cursor-pointer text-black border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-400"
+              className="flex flex-col items-center justify-center w-full h-full p-20 cursor-pointer text-black border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-400"
             >
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                 <UploadCloud className="w-8 h-8 mb-4 text-base-content" />
